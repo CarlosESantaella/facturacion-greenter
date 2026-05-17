@@ -1,59 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Facturación Electrónica SUNAT — API (Greenter + Laravel 12)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API REST en **Laravel 12 / PHP 8.3** para la generación, firma y envío de comprobantes electrónicos (facturas, boletas, notas) a **SUNAT** (Perú), construida sobre el ecosistema [Greenter](https://greenter.dev). Multi-tenant: cada usuario gestiona sus propias empresas y comprobantes.
 
-## About Laravel
+## Características
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Registro y autenticación con **Laravel Sanctum** (tokens Bearer).
+- CRUD de **empresas** por usuario (clave de ruta: `ruc`).
+- Generación de **XML UBL 2.1** firmado digitalmente.
+- Envío directo a los endpoints SOAP de SUNAT (beta y producción).
+- Generación de **PDF/HTML** del comprobante.
+- Conversión automática de montos a letras (es-PE) para la leyenda legal.
+- Cálculo de totales por tipo de afectación IGV (Catálogo 07 SUNAT: 10 Gravado, 20 Exonerado, 30 Inafecto, 40 Exportación, etc.).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Capa | Tecnología |
+|---|---|
+| Framework | Laravel 12 |
+| PHP | 8.3 |
+| Auth | Laravel Sanctum 4 |
+| Facturación electrónica | `greenter/lite`, `greenter/report`, `greenter/htmltopdf` |
+| PDF | `barryvdh/laravel-dompdf` |
+| Montos a letras | `luecano/numero-a-letras` |
+| DB | MySQL (dev local: Laragon) / SQLite in-memory en tests |
+| Tests | PHPUnit 11 |
+| Lint/format | Laravel Pint (PSR-12) |
 
-## Learning Laravel
+## Requisitos
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP **8.3+**
+- Composer 2
+- Node.js 20+ y npm
+- MySQL 8 (o el motor configurado en `.env`)
+- Extensiones PHP: `openssl`, `soap`, `mbstring`, `xml`, `curl`, `pdo_mysql`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Instalación
 
-## Laravel Sponsors
+```bash
+git clone git@github.com:CarlosESantaella/facturacion-greenter.git
+cd facturacion-greenter
+composer run setup
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+El script `setup` ejecuta: `composer install`, copia `.env.example` → `.env`, genera la app key, corre migraciones, instala npm y compila assets.
 
-### Premium Partners
+Configura las credenciales de base de datos en `.env` antes de ejecutar `setup`:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=greenter
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Contributing
+## Comandos
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Tarea | Comando |
+|---|---|
+| Setup completo | `composer run setup` |
+| Servidor de desarrollo (Laravel + queue + Vite) | `composer run dev` |
+| Correr todos los tests | `composer run test` |
+| Correr un test específico | `php artisan test --filter=NombreDelTest` |
+| Lint / format | `./vendor/bin/pint` |
+| Migraciones | `php artisan migrate` |
+| Build de assets | `npm run build` |
 
-## Code of Conduct
+## Endpoints
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Base: `/api`
 
-## Security Vulnerabilities
+### Públicos
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/register` | Registrar usuario |
+| POST | `/login` | Iniciar sesión y obtener token |
 
-## License
+### Autenticados (`Authorization: Bearer <token>`)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/logout` | Cerrar sesión (revocar token) |
+| POST | `/refresh` | Renovar token |
+| POST | `/me` | Datos del usuario autenticado |
+| GET | `/user` | Usuario actual (Sanctum) |
+| GET\|POST\|PUT\|DELETE | `/companies` | CRUD de empresas (route key: `{ruc}`) |
+| GET | `/invoices/send` | Firmar y enviar comprobante a SUNAT |
+| GET | `/invoices/xml` | Obtener el XML UBL del comprobante |
+| GET | `/invoices/pdf` | Obtener el PDF del comprobante |
+
+## Estructura
+
+```
+app/
+├── Http/Controllers/Api/
+│   ├── AuthController.php
+│   ├── RegisterController.php
+│   ├── CompanyController.php
+│   └── InvoiceController.php       # incluye setTotales() con lógica IGV cat. 07
+├── Models/
+│   ├── User.php                    # HasApiTokens
+│   └── Company.php                 # belongsTo User, ruc como route key
+├── Rules/
+│   └── UniqueRucRule.php           # RUC único por usuario
+└── Services/
+    └── SunatService.php            # integración con Greenter (See, Invoice, Client, ...)
+
+storage/app/
+├── logos/                          # logos de empresa
+└── certs/                          # certificados .pfx/.pem (no se versionan)
+```
+
+## Almacenamiento de archivos sensibles
+
+Los certificados digitales (`.pfx` / `.pem`) y logos de empresa se guardan en `storage/app/certs/` y `storage/app/logos/` respectivamente. **No subir** estos archivos al repositorio: están excluidos vía `.gitignore`.
+
+## Convenciones
+
+- **PSR-12** vía Laravel Pint, 4 espacios de indentación.
+- Nombres en **español** para campos fiscales/de negocio (`razon_social`, `ruc`, `tipoDoc`, `mtoIGV`, `sol_user`); en **inglés** para patrones de framework.
+- Validación inline en controllers con `$request->validate()` (sin Form Requests).
+- Redondeo de totales: `floor(x * 10) / 10`.
+
+## Tests
+
+```bash
+composer run test
+```
+
+PHPUnit 11 con SQLite en memoria (`phpunit.xml` sobrescribe la DB a `sqlite/:memory:`).
+
+## Licencia
+
+MIT.
